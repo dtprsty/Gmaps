@@ -160,7 +160,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             MapsRetrofit service = retrofit.create(MapsRetrofit.class);
 
-            Call<Example> call = service.getNearbyPlaces("true", "AIzaSyB4ZMluvmIxrJok4BoKbInLS_FvynkhuIQ", type, latitude + "," + longitude, PROXIMITY_RADIUS);
+            Call<Example> call = service.getNearbyPlaces("true", "AIzaSyDN7RJFmImYAca96elyZlE5s_fhX-MMuhk", type, latitude + "," + longitude, PROXIMITY_RADIUS);
 
             call.enqueue(new Callback<Example>() {
                 @Override
