@@ -13,9 +13,14 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.AutocompleteFilter;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -24,6 +29,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.net.URLDecoder;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -42,13 +49,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LocationListener {
 
         private GoogleMap mMap;
-        double latitude;
-        double longitude;
         private int PROXIMITY_RADIUS = 5000;
         GoogleApiClient mGoogleApiClient;
         Location mLastLocation;
         Marker mCurrLocationMarker;
         LocationRequest mLocationRequest;
+        double longitude, latitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,16 +120,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mMap.setMyLocationEnabled(true);
             }
 
+            /*PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete);
+
+            AutocompleteFilter filter = new AutocompleteFilter.Builder()
+                .setCountry("ID")
+                .setTypeFilter(AutocompleteFilter.TYPE_FILTER_GEOCODE )
+                .build();
+            autocompleteFragment.setFilter(filter);
+
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(Place place) {
+                    build_retrofit_and_get_response(place.getName().toString());
+                }
+
+                @Override
+                public void onError(Status status) {
+                    Toast.makeText(MapsActivity.this, status.toString(), Toast.LENGTH_SHORT).show();
+                }
+            });*/
+
             Button btnSchool = (Button) findViewById(R.id.btnMasjid);
             btnSchool.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    build_retrofit_and_get_response("Masjid");
+                    build_retrofit_and_get_response("mosque", latitude, longitude);
                 }
             });
         }
 
-        private void build_retrofit_and_get_response(String type) {
+        private void build_retrofit_and_get_response(String type, double latitude, double longitude) {
 
             String url = "https://maps.googleapis.com/maps/";
 
@@ -134,12 +160,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             MapsRetrofit service = retrofit.create(MapsRetrofit.class);
 
-            Call<Example> call = service.getNearbyPlaces(type, latitude + "," + longitude, PROXIMITY_RADIUS);
+            Call<Example> call = service.getNearbyPlaces("true", "AIzaSyB4ZMluvmIxrJok4BoKbInLS_FvynkhuIQ", type, latitude + "," + longitude, PROXIMITY_RADIUS);
 
             call.enqueue(new Callback<Example>() {
                 @Override
                 public void onResponse(Call<Example> call, Response<Example> response) {
                     try {
+
+                        Log.e("URL", call.request().url().toString());
                         mMap.clear();
                         // This loop will go through all the results and add marker on each location.
                         for (int i = 0; i < response.body().getResults().size(); i++) {
@@ -214,6 +242,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Place current location marker
             latitude = location.getLatitude();
             longitude = location.getLongitude();
+
+            Log.e("LOCATION", latitude + "," + longitude);
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
@@ -227,9 +257,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //move map camera
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
 
-            Log.d("onLocationChanged", String.format("latitude:%.3f longitude:%.3f", latitude, longitude));
+            Log.d("onLocationChanged", String.format("latitude:%f longitude:%f", latitude, longitude));
 
             Log.d("onLocationChanged", "Exit");
         }
